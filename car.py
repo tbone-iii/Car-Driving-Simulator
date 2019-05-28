@@ -5,6 +5,7 @@
 import pygame
 import config
 from math import cos, sin, pi, hypot
+from typing import List
 
 
 # Create the car class
@@ -32,7 +33,7 @@ class Car(pygame.sprite.Sprite):
         # Global acceleration
         (self.ax_global, self.ay_global) = (0, 0)
         # Global angle relative to horizontal +X axis [deg]
-        self.theta_deg = turning_speed_deg
+        self.theta_deg = 0
         # Max absolute velocity/speed, pixels/sec
         self.max_v = max_v
         self.max_a = max_a
@@ -59,7 +60,7 @@ class Car(pygame.sprite.Sprite):
         self.ay = 0
 
         # Theta delta, time delta
-        self.theta_delta_deg = 2
+        self.theta_delta_deg = turning_speed_deg
         self.time_delta = config.time_delta
 
         # Previous rectangle and image used to fill in black behind image
@@ -164,6 +165,54 @@ class Car(pygame.sprite.Sprite):
 
         # Perform the image rotation
         self.turn()
+
+    def hitbox_display(self):
+        """ Display the hitbox, centerpoint, and rectangle outline.
+        """
+        # ? Draw the outline rectangle of the rectangle.
+        pygame.draw.rect(self.screen, config.RED, self.rect, 1)
+
+        # Determine coordinates of rotated image corners and set to list
+        H = self.height * 0.92      # slightly reduced to shrink the hitbox
+        L = self.width * 0.95
+
+        # Establish the points to rotate from original frame to another.
+        px = self.px_global
+        py = self.py_global
+        top_left = (-L/2, -H/2)
+        bottom_left = (-L/2, H/2)
+        bottom_right = (L/2, H/2)
+        top_right = (L/2, -H/2)
+        pointlist = [top_left, bottom_left, bottom_right, top_right]
+        # Perform the rotation
+        pointlist = self.rotation_transformation(
+            pointlist=pointlist, angle_deg=self.theta_deg,
+            translation=(px, py))
+        # ? Draw the hitbox
+        pygame.draw.polygon(self.screen, config.GREEN, pointlist, 1)
+
+        # ? Draw the centerpoint
+        (px, py) = int(px), int(py)
+        pygame.draw.circle(self.screen, config.GREEN, (px, py), 2, 0)
+
+    def rotation_transformation(self, pointlist: List[tuple],
+                                angle_deg: float,
+                                translation: tuple) -> List[tuple]:
+        """ Performs a linear transformation on a list of points as tuples.
+            This linear transformation is a rotation and translation from
+            the base frame {0} to another frame {1} (of reference).
+
+            Returns the transformed pointlist.
+        """
+        th = angle_deg * pi/180     # convert to radians from degrees
+        px = translation[0]
+        py = translation[1]
+        # Operation below is R matrix times vector, plus frame transformation.
+        for index, point in enumerate(pointlist):
+            xt = cos(th) * point[0] + sin(th) * point[1] + px
+            yt = -sin(th) * point[0] + cos(th) * point[1] + py
+            pointlist[index] = (xt, yt)
+        return pointlist
 
     def update(self):
         """ Update the sprite conditions (pos and vel) on screen.
