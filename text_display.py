@@ -20,7 +20,7 @@ class Text:
         self.text_surfaces = []
         self.text_rects = []
 
-    def text_objects(self, text, font, color):
+    def text_objects(self, text: str, font, color: tuple):
         """ Takes text and pygame font and returns a text surface and rect.
         """
         text_surface = font.render(text, True, color)
@@ -62,7 +62,8 @@ class Text:
         pygame.display.update()
         return text_surface
 
-    def change_text(self, index, new_text, fontsize=font_size):
+    def change_text(self, index: int, new_text: str,
+                    fontsize=font_size) -> None:
         """ Updates the text in the list with a new text at the index.
             Automatically finds the coordinates of the previous text.
         """

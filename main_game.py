@@ -6,8 +6,8 @@ import debug_output
 
 # TODO:
 # ! 1) Permit active changing of car variables while the game is running.
-# ! 2) Show a HITBOX and IMAGE OUTLINE of the car, which shows stuff like:
-# ! ----- a) The centerpoint of the car
+# * 2) Show a HITBOX and IMAGE OUTLINE of the car, which shows stuff like:
+# * ----- a) The centerpoint of the car
 # ! ----- b) The PIVOT point of the car (back tires, centralized)
 # ! ----- c) etc.
 # ! 3) Change the mechanism behind the rotation of the car.

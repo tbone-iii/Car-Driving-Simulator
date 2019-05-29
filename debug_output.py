@@ -59,6 +59,9 @@ class Player_Car_Info:
         self.text_acceleration.change_text(0, acc_text)
         self.text_angle.change_text(0, angle_text)
 
+        # Display the rectangle around the car
+        player_car.hitbox_display()
+
     def clear_text(self):
         for text in self.text_list:
             text.change_text(0, "")
