@@ -16,9 +16,11 @@ class Player_Car_Info:
         self.text_velocity = text_display.Text(screen)
         self.text_acceleration = text_display.Text(screen)
         self.text_angle = text_display.Text(screen)
+        self.text_tire_angle = text_display.Text(screen)
 
         self.text_list = [self.text_position, self.text_velocity,
-                          self.text_acceleration, self.text_angle]
+                          self.text_acceleration, self.text_angle,
+                          self.text_tire_angle]
 
         # Establish initial text for debugging purposes
         self.text_position.message_display(
@@ -28,7 +30,8 @@ class Player_Car_Info:
         self.text_acceleration.message_display(
             f"ax: {0: 5}, ay: {0: 5}", 0, 60)
         self.text_angle.message_display(
-            f"Angle: {0: 5}", 0, 90)
+            f"Car Angle: {0: 5}", 0, 90)
+        self.text_tire_angle.message_display("", 0, 120)
 
     def update(self):
         """ Updates the text according to the internal
@@ -41,6 +44,8 @@ class Player_Car_Info:
         (vx, vy) = (player_car.vx_global, player_car.vy_global)
         (ax, ay) = (player_car.ax_global, player_car.ay_global)
         theta_deg = player_car.theta_deg
+        tire_angle = player_car.tire_angle_deg
+
         vel_text = (f"vx: {round(vx, 2): >10.2f}, "
                     + f"vy: {round(vy, 2): >5.2f}"
                     + " " * 5)
@@ -50,14 +55,17 @@ class Player_Car_Info:
         acc_text = (f"ax: {round(ax, 2): >10.2f}, "
                     + f"ay: {round(ay, 2): >5.2f}"
                     + " " * 5)
-        angle_text = (f"Angle: {round(theta_deg, 2): >10.2f}"
+        angle_text = (f"Car Angle: {round(theta_deg, 2): >10.2f}"
                       + " " * 5)
+        tire_angle_text = (f"Tire Angle: {round(tire_angle, 2): >10.2f}"
+                           + " " * 5)
 
         # Update the message according to Car global vals using text above
         self.text_position.change_text(0, pos_text)
         self.text_velocity.change_text(0, vel_text)
         self.text_acceleration.change_text(0, acc_text)
         self.text_angle.change_text(0, angle_text)
+        self.text_tire_angle.change_text(0, tire_angle_text)
 
         # Display the rectangle around the car
         player_car.hitbox_display()

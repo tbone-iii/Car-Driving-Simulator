@@ -9,17 +9,18 @@ import debug_output
 # * 2) Show a HITBOX and IMAGE OUTLINE of the car, which shows stuff like:
 # * ----- a) The centerpoint of the car
 # ! ----- b) The PIVOT point of the car (back tires, centralized)
-# ! ----- c) etc.
-# ! 3) Change the mechanism behind the rotation of the car.
-# ! ----- a) Have the car pivot about the back tires
-# ! ----- b) Calculate the angular speed the car can move with respect to
-# ! ........  the turning radius (and proportional the car velocity and length)
-# ! ----- c) Doing ^ THIS ^ may require determining the relative positions of
-# ! ........  the car tires (the center of these positions, that is)
-# ! 4) Change the steering mechanism
-# ! ----- a) Gradually change the steering angle up to the maximum while
-# ! ........  the left and right keys are pressed.
-
+#   ----- c) etc.
+# * 3) Change the mechanism behind the rotation of the car.
+# * ----- a) Have the car pivot about the back tires
+# * ----- b) Calculate the angular speed the car can move with respect to
+# * ........  the turning radius (and proportional the car velocity and length)
+# * ----- c) Doing ^ THIS ^ may require determining the relative positions of
+# * ........  the car tires (the center of these positions, that is)
+# * 4) Change the steering mechanism
+# * ----- a) Gradually change the steering angle up to the maximum while
+# * ........  the left and right keys are pressed.
+# ! 5) Refactor the text display for the debug output usage. Suboptimal method
+# ? 6) In the future, potentially figure out another way for rear-pivoting.
 
 # Main game loop
 def main_loop():
@@ -81,6 +82,10 @@ def main_loop():
             player_car.turn_left()
         if keys_pressed[pygame.K_RIGHT]:
             player_car.turn_right()
+        # If left and right keys not pressed, allow steering
+        # angle to return to 0
+        if not (keys_pressed[pygame.K_LEFT] or keys_pressed[pygame.K_RIGHT]):
+            player_car.turn_none()
         # Determine braking
         if keys_pressed[pygame.K_DOWN]:
             player_car.brake()

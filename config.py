@@ -10,7 +10,7 @@ DISPLAY_HEIGHT = 700
 RESOLUTION = (DISPLAY_WIDTH, DISPLAY_HEIGHT)
 
 # Establish FPS (frames-per-second) and time delta
-FPS = 60
+FPS = 120
 time_delta = 1/FPS
 
 # Establish colors

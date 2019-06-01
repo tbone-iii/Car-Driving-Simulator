@@ -46,6 +46,11 @@ class Car(pygame.sprite.Sprite):
         self.width = int(0.10 * config.DISPLAY_WIDTH)
         self.height = int(im_y/im_x * self.width)
 
+        # Establish wheelbase based on "width" of the car and tire angle
+        self.wheelbase = self.width * 0.70
+        self.tire_angle_deg = 0
+        self.max_tire_angle_deg = 70
+
         # Resize the image
         self.image = pygame.transform.scale(self.image,
                                             (self.width, self.height))
@@ -129,9 +134,32 @@ class Car(pygame.sprite.Sprite):
         self.px_global += self.vx_global * time_delta
         self.py_global += self.vy_global * time_delta
 
+    def calculate_theta_delta(self):
+        """ Computes the change in car image angle based on the car velocity
+            and wheelbase (length between front and back tires).
+        """
+        vx = self.vx
+        phi = self.tire_angle_deg * pi/180
+        wb = self.wheelbase
+        time_delta = self.time_delta
+        self.theta_delta_deg = (vx * sin(phi)/wb * time_delta) * 180/pi
+
     def turn(self):
         """ Performs the image rotation with background correction.
         """
+        # Calculate the change in car angle with respect to time
+        self.calculate_theta_delta()
+
+        # Increment the angle
+        self.theta_deg += self.theta_delta_deg
+        # Correct the angle if outside 360 degree limit
+        if self.theta_delta_deg > 0:      # if positive
+            if self.theta_deg > 360:      # if angle outside 360
+                self.theta_deg -= 360     # correct it
+        elif self.theta_delta_deg < 0:    # if negative
+            if self.theta_deg <= 0:       # if angle below or equal to 0
+                self.theta_deg += 360     # correct it
+
         # Erase previous image before rotation
         self.screen.fill(config.BLACK, rect=self.rect)
 
@@ -143,28 +171,33 @@ class Car(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=self.rect.center)
 
     def turn_left(self):
-        """ Increase the theta angle by some functional amount.
+        """ Increase the tire angle.
         """
-        # Increment the angle
-        self.theta_deg += self.theta_delta_deg
-        # Correct the angle if outside 360 degree limit
-        if (self.theta_deg >= 360):
-            self.theta_deg -= 360
+        phi = self.tire_angle_deg
+        if phi + 1 <= self.max_tire_angle_deg:
+            self.tire_angle_deg += 1
 
         # Perform the image rotation
         self.turn()
 
     def turn_right(self):
-        """ Decrease the theta angle by some functional amount.
+        """ Decrease the tire angle.
         """
-        # Decrement the angle
-        self.theta_deg -= self.theta_delta_deg
-        # Correct the angle if it's outside of the 0 degree limit
-        if (self.theta_deg <= 0):
-            self.theta_deg += 360
+        phi = self.tire_angle_deg
+        if phi - 1 >= -self.max_tire_angle_deg:
+            self.tire_angle_deg -= 1
 
         # Perform the image rotation
         self.turn()
+
+    def turn_none(self):
+        """ Return the steering angle back to 0 degrees with no input.
+        """
+        if self.tire_angle_deg:
+            self.tire_angle_deg *= 0.80**(self.vx/self.max_v)
+            self.turn()
+        if abs(self.tire_angle_deg) <= 0.1:
+            self.tire_angle_deg = 0
 
     def hitbox_display(self):
         """ Display the hitbox, centerpoint, and rectangle outline.
@@ -223,6 +256,7 @@ class Car(pygame.sprite.Sprite):
         # Calculates the velocity, then position of the car
         self.calculate_velocity()
         self.calculate_position()
+        self.calculate_theta_delta()
         position = (self.px_global, self.py_global)
 
         # Erase the old rect with a black fill (optimization reasons)
