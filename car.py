@@ -16,8 +16,8 @@ class Car(pygame.sprite.Sprite):
                  screen,
                  position: tuple,
                  image_path: str = config.image_enemy_car,
-                 max_v: float = 100.0,
-                 max_a: float = 10.0,
+                 max_v_mph: float = 120.0,
+                 zero_to_sixty_time_sec: float = 4.0,
                  turning_speed_deg: float = 2  # degrees per frame
                  ) -> None:
         # Call the parent class constructor
@@ -26,30 +26,33 @@ class Car(pygame.sprite.Sprite):
         self.screen = screen
         (im_x, im_y) = self.image.get_size()
 
-        # Global position
+        # Global position, velocity, and acceleration
         (self.px_global, self.py_global) = position
-        # Global velocity
         (self.vx_global, self.vy_global) = (0, 0)
-        # Global acceleration
         (self.ax_global, self.ay_global) = (0, 0)
         # Global angle relative to horizontal +X axis [deg]
         self.theta_deg = 0
         # Max absolute velocity/speed, pixels/sec
-        self.max_v = max_v
-        self.max_a = max_a
-
-        # Acceleration parameters
-        self.a_friction = -2  # frictional deceleration [pixels/sec^2]
-        self.a_brake = -30    # frictional acceleration [pixels/sec^2]
+        self.max_v_mph = max_v_mph
 
         # Establish width and height as a percentage of the display width
         self.width = int(0.10 * config.DISPLAY_WIDTH)
         self.height = int(im_y/im_x * self.width)
 
+        # ? Car length parameter
+        car_length_feet = 15
+        self.feet_per_pixel = car_length_feet / self.width
+
+        # ? Acceleration parameters based on car length and 0-60 time
+        self.zero_to_sixty_time_sec = 4
+        # frictional accelerations [in g: 32.2f/s^2, e.g. 2Gs of decel.]
+        self.a_friction_in_g = -0.05    # negative due to deceleration
+        self.a_brake_in_g = -1
+
         # Establish wheelbase based on "width" of the car and tire angle
         self.wheelbase = self.width * 0.70
         self.tire_angle_deg = 0
-        self.max_tire_angle_deg = 70
+        self.max_tire_angle_deg = 45
 
         # Resize the image
         self.image = pygame.transform.scale(self.image,
@@ -71,6 +74,42 @@ class Car(pygame.sprite.Sprite):
         # Previous rectangle and image used to fill in black behind image
         self.prev_image = self.image
         self.rect = self.image.get_rect(topleft=position)
+
+        # Screen wrap TRUE or FALSE
+        self.screen_wrap_on = True
+
+        # Properties list in string format for var change in debug output
+        self.properties = (
+            "zero_to_sixty_time_sec", "max_tire_angle_deg", "a_friction_in_g",
+            "a_brake_in_g", "max_v_mph", "screen_wrap_on")
+
+    @property
+    def theta_rad(self):
+        """ Converts from degrees to radians as a property value. """
+        return self.theta_deg * pi/180
+
+    @property
+    def max_a(self):
+        """ Converts from 0-60 mph time to max acceleration in pixels/s^2. """
+        # feet per second^2, convert mph to feet per second
+        max_a_fpss = 60 / self.zero_to_sixty_time_sec * 5280/3600
+        return max_a_fpss/self.feet_per_pixel
+
+    @property
+    def max_v(self):
+        """ Converts the maximum MPH velocity to pixels per second velocity.
+        """
+        return self.max_v_mph*(5280/3600) / self.feet_per_pixel
+
+    @property
+    def a_friction(self):
+        """ Convert acceleration due to friction from G-force to pixel/s/s. """
+        return self.a_friction_in_g * 32.2 / self.feet_per_pixel
+
+    @property
+    def a_brake(self):
+        """ Convert acceleration due to braking from G-force to pixel/s/s. """
+        return self.a_brake_in_g * 32.2 / self.feet_per_pixel
 
     def accelerate(self):
         """ Sets the car acceleration to the maximum
@@ -106,15 +145,13 @@ class Car(pygame.sprite.Sprite):
             self.vx = 0.0
 
     def calculate_velocity(self):
-        """ Using the "local" values, calculate the global vel.
-        """
+        """ Using the "local" values, calculate the global velocity. """
         # Establish local variables
         vx = self.vx
         ax = self.ax
         time_delta = self.time_delta
         max_v = self.max_v
-        # Unit conversion
-        theta_rad = self.theta_deg * pi/180
+        theta_rad = self.theta_rad
 
         # If the velocity can still increase beneath maximum velocity, do it
         if vx + ax * time_delta <= max_v:
@@ -128,11 +165,32 @@ class Car(pygame.sprite.Sprite):
         self.vy_global = -self.vx * sin(theta_rad)
 
     def calculate_position(self):
-        """ Using the global values of velocity, find the new global pos.
+        """ Using the global values of velocity, find the new global position.
         """
         time_delta = self.time_delta
         self.px_global += self.vx_global * time_delta
         self.py_global += self.vy_global * time_delta
+        if self.screen_wrap_on:
+            # If too far right
+            if self.rect.right > config.DISPLAY_WIDTH:
+                self.px_global -= config.DISPLAY_WIDTH
+            # If too far left
+            if self.rect.left < 0:
+                self.px_global += config.DISPLAY_WIDTH
+            # If too far up
+            if self.rect.top < 0:
+                self.py_global += config.DISPLAY_HEIGHT
+            # If too far down
+            if self.rect.bottom > config.DISPLAY_HEIGHT:
+                self.py_global -= config.DISPLAY_HEIGHT
+
+    def calculate_acceleration(self):
+        """ Using the local value of acceleration, calculate the global
+            values of acceleration.
+        """
+        theta_rad = self.theta_rad
+        self.ax_global = self.ax * cos(theta_rad)
+        self.vy_global = -self.ax * sin(theta_rad)
 
     def calculate_theta_delta(self):
         """ Computes the change in car image angle based on the car velocity
@@ -218,7 +276,7 @@ class Car(pygame.sprite.Sprite):
         top_right = (L/2, -H/2)
         pointlist = [top_left, bottom_left, bottom_right, top_right]
         # Perform the rotation
-        pointlist = self.rotation_transformation(
+        pointlist = rotation_transformation(
             pointlist=pointlist, angle_deg=self.theta_deg,
             translation=(px, py))
         # ? Draw the hitbox
@@ -227,25 +285,6 @@ class Car(pygame.sprite.Sprite):
         # ? Draw the centerpoint
         (px, py) = int(px), int(py)
         pygame.draw.circle(self.screen, config.GREEN, (px, py), 2, 0)
-
-    def rotation_transformation(self, pointlist: List[tuple],
-                                angle_deg: float,
-                                translation: tuple) -> List[tuple]:
-        """ Performs a linear transformation on a list of points as tuples.
-            This linear transformation is a rotation and translation from
-            the base frame {0} to another frame {1} (of reference).
-
-            Returns the transformed pointlist.
-        """
-        th = angle_deg * pi/180     # convert to radians from degrees
-        px = translation[0]
-        py = translation[1]
-        # Operation below is R matrix times vector, plus frame transformation.
-        for index, point in enumerate(pointlist):
-            xt = cos(th) * point[0] + sin(th) * point[1] + px
-            yt = -sin(th) * point[0] + cos(th) * point[1] + py
-            pointlist[index] = (xt, yt)
-        return pointlist
 
     def update(self):
         """ Update the sprite conditions (pos and vel) on screen.
@@ -256,6 +295,7 @@ class Car(pygame.sprite.Sprite):
         # Calculates the velocity, then position of the car
         self.calculate_velocity()
         self.calculate_position()
+        self.calculate_acceleration()
         self.calculate_theta_delta()
         position = (self.px_global, self.py_global)
 
@@ -270,3 +310,23 @@ class Car(pygame.sprite.Sprite):
 
         # Update prev image
         self.prev_image = self.image
+
+
+def rotation_transformation(pointlist: List[tuple],
+                            angle_deg: float,
+                            translation: tuple) -> List[tuple]:
+    """ Performs a linear transformation on a list of points as tuples.
+        This linear transformation is a rotation and translation from
+        the base frame {0} to another frame {1} (of reference).
+
+        Returns the transformed pointlist.
+    """
+    th = angle_deg * pi/180     # convert to radians from degrees
+    px = translation[0]
+    py = translation[1]
+    # Operation below is R matrix times vector, plus frame transformation.
+    for index, point in enumerate(pointlist):
+        xt = cos(th) * point[0] + sin(th) * point[1] + px
+        yt = -sin(th) * point[0] + cos(th) * point[1] + py
+        pointlist[index] = (xt, yt)
+    return pointlist

@@ -21,12 +21,14 @@ import debug_output
 # * ........  the left and right keys are pressed.
 # ! 5) Refactor the text display for the debug output usage. Suboptimal method
 # ? 6) In the future, potentially figure out another way for rear-pivoting.
+# * 7) Limit turning angle at high speeds (maximum centripetal acc. prop)
+
+# Initialize pygame modules
+pygame.init()
+
 
 # Main game loop
 def main_loop():
-    # Initialize pygame
-    pygame.init()
-
     # Create the main window and clock
     screen = pygame.display.set_mode(config.RESOLUTION)
     clock = pygame.time.Clock()
@@ -64,10 +66,14 @@ def main_loop():
                 # Toggles the display of the car text information
                 if event.key == pygame.K_d:
                     # Clear the text of the debugging info
-                    player_car_info.clear_text()
-
+                    player_car_info.clear_debug_text()
                     # Invert the debugging option
                     DEBUGGING = not DEBUGGING
+                # If the F1 key is pressed, show variable change options
+                if event.key == pygame.K_F1:
+                    # TODO: Show command options to change certain car vars.
+                    # TODO: And allow input
+                    player_car_info.toggle_console()
 
             # If a key is released
             if event.type == pygame.KEYUP:
@@ -96,6 +102,9 @@ def main_loop():
         # If debug mode is on, update the debug text
         if DEBUGGING:
             player_car_info.update()
+        # If the console is on, update the console text
+        if player_car_info.IS_OPEN:
+            player_car_info.open_console()
 
         # Update the screen
         pygame.display.flip()

@@ -10,18 +10,18 @@ class Text:
         is its own type of text (e.g. velocity output, position output),
         allowing for easy enabling and disabling of text display.
     """
-    font_size = config.default_font_size  # default font size
     white = config.WHITE
     black = config.BLACK
-    normal_font = pygame.font.Font(config.font, font_size)
 
-    def __init__(self, game_window):
+    def __init__(self, game_window, font_size=config.default_font_size):
         """ Class constructor initializing with the
             pygame game_window/screen handle.
         """
         self.game_window = game_window
         self.text_surfaces = []
         self.text_rects = []
+        self.font_size = int(font_size)
+        self.normal_font = pygame.font.Font(config.font, self.font_size)
 
     def text_objects(self, text: str, font, color: tuple):
         """ Takes text and pygame font and returns a text surface and rect.
@@ -30,7 +30,7 @@ class Text:
         return text_surface, text_surface.get_rect()
 
     def message_display(self, text, x: int, y: int, position: str = 'topleft',
-                        color: tuple = white, fontsize=font_size):
+                        color: tuple = white):
         """ Takes text and places it at (x, y) coordinates.
             The position argument is a string representating the
             rectangle origin location.
@@ -39,7 +39,7 @@ class Text:
             or 'center'.
         """
         text_surface, text_rect = self.text_objects(
-            text=text, font=Text.normal_font, color=color)
+            text=text, font=self.normal_font, color=color)
 
         # TODO: Use dictionary to simplify this chain of if-statements below.
         if position is 'bottomright':
@@ -65,8 +65,7 @@ class Text:
         pygame.display.update()
         return text_surface
 
-    def change_text(self, index: int, new_text: str,
-                    fontsize=font_size) -> None:
+    def change_text(self, index: int, new_text: str) -> None:
         """ Updates the text in the list with a new text at the index.
             Automatically finds the coordinates of the previous text.
         """
@@ -76,7 +75,7 @@ class Text:
         # Set up the new message text and font
         color = Text.white
         text_surface, text_rect = self.text_objects(
-            text=new_text, font=Text.normal_font, color=color)
+            text=new_text, font=self.normal_font, color=color)
         # Set the proper coordinates for the new text rect (old coordinates)
         # TODO: Generalize topleft, center, etc. below
         text_rect.topleft = prev_rect.topleft
