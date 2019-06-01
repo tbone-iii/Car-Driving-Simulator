@@ -1,6 +1,8 @@
 import pygame
 import config
 
+pygame.init()
+
 
 class Text:
     """ Text class handles all text displays on a game window,
@@ -11,6 +13,7 @@ class Text:
     font_size = config.default_font_size  # default font size
     white = config.WHITE
     black = config.BLACK
+    normal_font = pygame.font.Font(config.font, font_size)
 
     def __init__(self, game_window):
         """ Class constructor initializing with the
@@ -35,8 +38,8 @@ class Text:
             For example, position can be 'bottomright'
             or 'center'.
         """
-        normal_font = pygame.font.Font('Marvelous-Sans-Demo.otf', fontsize)
-        text_surface, text_rect = self.text_objects(text, normal_font, color)
+        text_surface, text_rect = self.text_objects(
+            text=text, font=Text.normal_font, color=color)
 
         # TODO: Use dictionary to simplify this chain of if-statements below.
         if position is 'bottomright':
@@ -72,9 +75,8 @@ class Text:
 
         # Set up the new message text and font
         color = Text.white
-        normal_font = pygame.font.Font('Marvelous-Sans-Demo.otf', fontsize)
-        text_surface, text_rect = self.text_objects(new_text, normal_font,
-                                                    color)
+        text_surface, text_rect = self.text_objects(
+            text=new_text, font=Text.normal_font, color=color)
         # Set the proper coordinates for the new text rect (old coordinates)
         # TODO: Generalize topleft, center, etc. below
         text_rect.topleft = prev_rect.topleft
@@ -84,7 +86,7 @@ class Text:
 
         # Blit the new text surface
         self.game_window.blit(text_surface, text_rect)
-        pygame.display.update(text_rect)
+        pygame.display.update([text_rect, prev_rect])
 
         # Update the list of text_rects and text_surfaces
         self.text_surfaces[index] = text_surface
