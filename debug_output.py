@@ -1,7 +1,7 @@
 import text_display
 import pygame
 
-from config import DISPLAY_HEIGHT, DISPLAY_WIDTH, FPS, default_font_size
+from config import DISPLAY_HEIGHT, DISPLAY_WIDTH, default_font_size
 from typing import Tuple
 
 
@@ -58,13 +58,13 @@ class Player_Car_Info:
         tire_angle = player_car.tire_angle_deg
 
         vel_text = (f"vx: {round(vx, 2): >10.2f}, "
-                    + f"vy: {round(vy, 2): >5.2f}"
+                    + f"vy: {round(vy, 2): >10.2f}"
                     + " " * 5)
         pos_text = (f"px: {round(px, 2): >10.2f}, "
-                    + f"py: {round(py, 2): >5.2f}"
+                    + f"py: {round(py, 2): >10.2f}"
                     + " " * 5)
         acc_text = (f"ax: {round(ax, 2): >10.2f}, "
-                    + f"ay: {round(ay, 2): >5.2f}"
+                    + f"ay: {round(ay, 2): >10.2f}"
                     + " " * 5)
         angle_text = (f"Car Angle: {round(theta_deg, 2): >10.2f}"
                       + " " * 5)

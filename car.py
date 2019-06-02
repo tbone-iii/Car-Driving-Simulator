@@ -4,7 +4,9 @@
 
 import pygame
 import config
-from math import cos, sin, pi, hypot
+import text_display
+
+from math import cos, sin, pi, atan
 from typing import List
 
 
@@ -47,7 +49,8 @@ class Car(pygame.sprite.Sprite):
         self.zero_to_sixty_time_sec = 4
         # frictional accelerations [in g: 32.2f/s^2, e.g. 2Gs of decel.]
         self.a_friction_in_g = -0.05    # negative due to deceleration
-        self.a_brake_in_g = -1
+        self.a_brake_in_g = -0.96
+        self.a_max_centripetal_in_g = 0.94
 
         # Establish wheelbase based on "width" of the car and tire angle
         self.wheelbase = self.width * 0.70
@@ -77,6 +80,7 @@ class Car(pygame.sprite.Sprite):
 
         # Screen wrap TRUE or FALSE
         self.screen_wrap_on = True
+        self.speedometer_exists = False
 
         # Properties list in string format for var change in debug output
         self.properties = (
@@ -111,6 +115,40 @@ class Car(pygame.sprite.Sprite):
         """ Convert acceleration due to braking from G-force to pixel/s/s. """
         return self.a_brake_in_g * 32.2 / self.feet_per_pixel
 
+    @property
+    def a_max_centripetal(self):
+        """ Convert max centripetal acceleration to pixel/s/s. """
+        return self.a_max_centripetal_in_g * 32.2 / self.feet_per_pixel
+
+    @property
+    def turning_radius(self):
+        """ Calculates the turning radius in pixels. """
+        theta_rad = self.tire_angle_deg * pi/180
+        if sin(theta_rad) == 0:
+            return 10**8
+        else:
+            return cos(theta_rad)/sin(theta_rad) * self.wheelbase
+
+    @property
+    def a_centripetal(self):
+        """ Calculates the current centripetal acceleration in pixels/s/s. """
+        return self.vx**2 / self.turning_radius
+
+    @property
+    def max_theoretical_tire_angle_rad(self):
+        """ Calculates the maximum tire angle based on max centripetal
+            acceleration. Formula is atan(w*ac/v^2) = delta
+        """
+        if self.vx == 0:
+            return self.max_tire_angle_deg
+        else:
+            return atan(self.wheelbase * self.a_max_centripetal / self.vx**2)
+
+    @property
+    def speed_absolute_MPH(self):
+        """ Calculates the magnitude of velocity in MPH. """
+        return self.vx * self.feet_per_pixel * 3600/5280
+
     def accelerate(self):
         """ Sets the car acceleration to the maximum
         """
@@ -131,16 +169,13 @@ class Car(pygame.sprite.Sprite):
             self.ax = 0
             self.vx = 0
 
-    def calculate_global_speed_magnitude(self):
-        return hypot(self.vx_global, self.vy_global)
-
     def check_stop_acceleration(self):
         """ Sets the car acceleration and velocity
             to 0 if it is frictionally decelerating
             and the velocity of the car is close to 0
         """
         if (self.ax == self.a_friction
-                and self.calculate_global_speed_magnitude() <= 0.25):
+                and abs(self.vx) <= 5):
             self.ax = 0.0
             self.vx = 0.0
 
@@ -190,11 +225,12 @@ class Car(pygame.sprite.Sprite):
         """
         theta_rad = self.theta_rad
         self.ax_global = self.ax * cos(theta_rad)
-        self.vy_global = -self.ax * sin(theta_rad)
+        self.ay_global = -self.ax * sin(theta_rad)
 
     def calculate_theta_delta(self):
-        """ Computes the change in car image angle based on the car velocity
-            and wheelbase (length between front and back tires).
+        """ Computes the change in car image angle based on the car
+            velocity and wheelbase (length between front and back
+            tires).
         """
         vx = self.vx
         phi = self.tire_angle_deg * pi/180
@@ -205,6 +241,14 @@ class Car(pygame.sprite.Sprite):
     def turn(self):
         """ Performs the image rotation with background correction.
         """
+        # Perform a check to limit the tire angle based on max centripetal
+        # acceleration.
+        max_theory_angle = 180/pi * self.max_theoretical_tire_angle_rad
+        angle = self.tire_angle_deg
+        if abs(angle) > max_theory_angle:
+            # Ensure the max theory angle has the same sign as the tire angle
+            self.tire_angle_deg = max_theory_angle * abs(angle)/angle
+
         # Calculate the change in car angle with respect to time
         self.calculate_theta_delta()
 
@@ -257,6 +301,19 @@ class Car(pygame.sprite.Sprite):
         if abs(self.tire_angle_deg) <= 0.1:
             self.tire_angle_deg = 0
 
+    def update_speedometer(self):
+        """ Creates a speedometer if it does not exist and updates it
+            on every frame.
+        """
+        if not self.speedometer_exists:
+            self.speedometer_exists = True
+            self.text_speedometer = text_display.Text(self.screen)
+            self.text_speedometer.message_display(
+                "0", x=config.DISPLAY_WIDTH, y=0, position='topright',
+                color=config.SILVER)
+        self.text_speedometer.change_text(
+            0, f"Speed: {self.speed_absolute_MPH: >6.2f} MPH")
+
     def hitbox_display(self):
         """ Display the hitbox, centerpoint, and rectangle outline.
         """
@@ -298,6 +355,9 @@ class Car(pygame.sprite.Sprite):
         self.calculate_acceleration()
         self.calculate_theta_delta()
         position = (self.px_global, self.py_global)
+
+        # Update the speedometer
+        self.update_speedometer()
 
         # Erase the old rect with a black fill (optimization reasons)
         self.screen.fill(config.BLACK, rect=self.rect)

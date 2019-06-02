@@ -22,6 +22,7 @@ import debug_output
 # ! 5) Refactor the text display for the debug output usage. Suboptimal method
 # ? 6) In the future, potentially figure out another way for rear-pivoting.
 # * 7) Limit turning angle at high speeds (maximum centripetal acc. prop)
+# ? 7) Change screen wrapping to include two images for smoother wrapping.
 
 # Initialize pygame modules
 pygame.init()
