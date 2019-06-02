@@ -4,25 +4,30 @@ import car
 import debug_output
 
 
-# TODO:
-# ! 1) Permit active changing of car variables while the game is running.
-# * 2) Show a HITBOX and IMAGE OUTLINE of the car, which shows stuff like:
-# * ----- a) The centerpoint of the car
+# TODO: GRAY means complete. RED means important.
+# TODO: BLUE means future improvements to be made.
+# . 1) Permit active changing of car variables while the game is running.
+# . 2) Show a HITBOX and IMAGE OUTLINE of the car, which shows stuff like:
+# . ----- a) The centerpoint of the car
 # ! ----- b) The PIVOT point of the car (back tires, centralized)
-#   ----- c) etc.
-# * 3) Change the mechanism behind the rotation of the car.
-# * ----- a) Have the car pivot about the back tires
-# * ----- b) Calculate the angular speed the car can move with respect to
-# * ........  the turning radius (and proportional the car velocity and length)
-# * ----- c) Doing ^ THIS ^ may require determining the relative positions of
-# * ........  the car tires (the center of these positions, that is)
-# * 4) Change the steering mechanism
-# * ----- a) Gradually change the steering angle up to the maximum while
-# * ........  the left and right keys are pressed.
+# . 3) Change the mechanism behind the rotation of the car.
+# . ----- a) Have the car pivot about the back tires
+# . ----- b) Calculate the angular speed the car can move with respect to
+# . ........  the turning radius (and proportional the car velocity and length)
+# . ----- c) Doing ^ THIS ^ may require determining the relative positions of
+# . ........  the car tires (the center of these positions, that is)
+# . 4) Change the steering mechanism
+# . ----- a) Gradually change the steering angle up to the maximum while
+# . ........  the left and right keys are pressed.
 # ! 5) Refactor the text display for the debug output usage. Suboptimal method
 # ? 6) In the future, potentially figure out another way for rear-pivoting.
-# * 7) Limit turning angle at high speeds (maximum centripetal acc. prop)
-# ? 7) Change screen wrapping to include two images for smoother wrapping.
+# . 7) Limit turning angle at high speeds (maximum centripetal acc. prop)
+# ? 8) Change screen wrapping to include two images for smoother wrapping.
+# ? 9) ALTERNATIVE VERSION: Allow controller analog input for better
+# ? ........ turning capabilities and skidding.
+# ? 10) Add scrolling background
+# ? ........ a) This would require a 'camera' that follows the car.
+# ? 11) Add collisions after including "hardbody" objects that cause crashing.
 
 # Initialize pygame modules
 pygame.init()
