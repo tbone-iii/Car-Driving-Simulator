@@ -107,7 +107,7 @@ class Player_Car_Info:
                         if console_input == "center":
                                 player_car.px_global = DISPLAY_WIDTH/2
                                 player_car.py_global = DISPLAY_HEIGHT/2
-                                console_input == ""
+                                console_input = ""
                         elif console_input:
                             try:
                                 (prop, value) = console_input.split()
