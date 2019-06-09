@@ -41,8 +41,8 @@ class Player_Car_Info:
         self.IS_OPEN: bool = False
         self.text_console = text_display.Text(
             screen, font_size=default_font_size/2)
-        self.text_console.message_display("INFO", 0, DISPLAY_HEIGHT - 60)
-        self.text_console.message_display("INPUT", 0, DISPLAY_HEIGHT - 30)
+        self.text_console.message_display("", 0, DISPLAY_HEIGHT - 60)
+        self.text_console.message_display("", 0, DISPLAY_HEIGHT - 30)
 
     def update(self):
         """ Updates the text according to the internal
