@@ -17,6 +17,12 @@ This can be possibly be done with the following commands:
 Download all the files and run the "main_game.py" file to begin the top-down simulation.
 
 <h1> Details </h1>
+
+Click to play video of a demo: <br>
+<a href="https://giant.gfycat.com/ThriftyAnguishedCoral.webm">
+<img alt="Thumbnail" src="https://raw.githubusercontent.com/tbone-iii/Car-Driving-Simulator/master/Video/video%20screenshot.png" width="400" height="400">
+</a>
+
 <h2> Physics </h2>
 The car's steering angle is limited to the maximum centripetal acceleration allowable
 before sliding begins. This is theoretically 1G (32.2 ft/s^2 or 9.80 m/s^2) if the coefficient
